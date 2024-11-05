@@ -5,7 +5,12 @@ export class P2P {
   peer: Peer;
   connections: Map<string, DataConnection> = new Map();
   constructor(public id?: string) {
-    id ? (this.peer = new Peer(id)) : (this.peer = new Peer());
+    if (id) {
+      this.peer = new Peer(id, { secure: true });
+    } else {
+      this.peer = new Peer("", { secure: true });
+    }
+
     this.peer.on("connection", this.handleIncomingConnection.bind(this));
 
     this.peer.on("open", id => {
