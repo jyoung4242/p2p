@@ -10,6 +10,9 @@ export enum HostStatus {
 }
 
 export class P2P {
+  tstamp1: number = 0;
+  pingtime: number = 0;
+  pings: number[] = [];
   interval: any;
   isClientReady: boolean = false;
   hoststatus: HostStatus = HostStatus.NotHost;
@@ -39,7 +42,10 @@ export class P2P {
   }
 
   pingPong = () => {
-    if (this.hoststatus == HostStatus.Host) this.sendData("PING");
+    if (this.hoststatus == HostStatus.Host) {
+      this.sendData("PING");
+      this.tstamp1 = performance.now();
+    }
 
     if (this.isClientReady && this.messageQueue.length > 0) {
       console.log("Sending from Queu:", this.messageQueue);
@@ -87,6 +93,12 @@ export class P2P {
       this.isClientReady = true;
       this.sendData("PONG");
     } else if (data == "PONG") {
+      this.pingtime = performance.now() - this.tstamp1;
+      this.pings.push(this.pingtime);
+      if (this.pings.length > 50) this.pings.shift();
+      console.log("PINGTIME: " + this.pingtime.toFixed(2) + "ms");
+      console.log("Average PINGS: " + this.pings.reduce((a, b) => a + b, 0) / this.pings.length);
+
       this.isClientReady = true;
     } else {
       if (!this.isClientReady) return;
