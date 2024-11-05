@@ -1,6 +1,11 @@
 import { myP2P } from "../main";
 
+export function hideUI() {
+  model.isUIVisible = false;
+}
+
 export const model = {
+  isUIVisible: true,
   id: "",
   hid: "",
   stringData: "",
@@ -40,7 +45,7 @@ export const template = `
 </style> 
 <div> 
     <canvas id='cnv'> </canvas> 
-    <hud-ui>
+    <hud-ui \${===isUIVisible}>
         <div style="padding: 10px; gap: 10px; width: 25%; height: 100%; display: flex; flex-direction: column;">
             
             <button \${click@=>client}>Connect to Host</button>

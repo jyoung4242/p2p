@@ -1,12 +1,16 @@
-import { EngineEvents, EventEmitter } from "excalibur";
+import { EngineEvents, EventEmitter, Vector } from "excalibur";
 import { ActorEvents } from "excalibur/build/dist/Actor";
 
 export interface CustomActorEventBus extends ActorEvents {
   myEvent: { myEventData: any };
   testEvent: { testEventData: any };
+  updateActor: { UUID: string; position: Vector; rotation: number };
 }
 
-export interface CustomeEngineEventBus extends EngineEvents {}
+export interface CustomeEngineEventBus extends EngineEvents {
+  hostStatusChanged: { status: string };
+  createActor: { actor: string; id: number };
+}
 
 export const ActorSignals = new EventEmitter<CustomActorEventBus>();
 

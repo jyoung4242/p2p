@@ -1,13 +1,23 @@
 // resources.ts
 import { ImageSource, Loader, Sprite, SpriteSheet } from "excalibur";
-//import myImageResource from './Assets/myImage.png' // replace this
+import bug from "./Assets/bug.png";
 
 export const Resources = {
-  // myImage: new ImageSource(myImageResource),
+  bug: new ImageSource(bug),
 };
+
+export const bugSS = SpriteSheet.fromImageSource({
+  image: Resources.bug,
+  grid: {
+    rows: 1,
+    columns: 6,
+    spriteWidth: 16,
+    spriteHeight: 16,
+  },
+});
 
 export const loader = new Loader();
 
-/* for (let res of Object.values(Resources)) {
+for (let res of Object.values(Resources)) {
   loader.addResource(res);
-} */
+}
