@@ -19,21 +19,19 @@ export class P2P {
   peer: Peer;
   connections: Map<string, DataConnection> = new Map();
   messageQueue: any[] = [];
+
   constructor(public engine: Engine, public id?: string) {
     if (id) {
       this.peer = new Peer(id, { secure: false });
     } else {
       this.peer = new Peer("", { secure: false });
     }
-
     this.peer.on("connection", this.handleIncomingConnection.bind(this));
-
     this.peer.on("open", id => {
       console.log("My peer ID is: " + id);
       model.id = id;
       this.id = id;
     });
-
     this.interval = setInterval(this.pingPong, 500);
   }
 
@@ -48,17 +46,13 @@ export class P2P {
     }
 
     if (this.isClientReady && this.messageQueue.length > 0) {
-      console.log("Sending from Queu:", this.messageQueue);
-      this.messageQueue.forEach((message: any) => {
-        this.sendData(message);
-      });
+      this.messageQueue.forEach((message: any) => this.sendData(message));
       this.messageQueue = [];
     }
   };
 
   handleIncomingConnection(connection: DataConnection) {
     this.connections.set(connection.peer, connection);
-    console.log("Connection established with: " + connection.peer);
     this.setupConnectionHandlers(connection);
     this.hoststatus = HostStatus.Host;
     this.engine.emit("hostStatusChanged", { status: this.hoststatus });
@@ -67,10 +61,13 @@ export class P2P {
   connectPeer(peerID: string) {
     const connection = this.peer.connect(peerID);
     this.setupConnectionHandlers(connection);
-    //@ts-ignore
-    this.connections[peerId] = connection;
+    this.connections.set(peerID, connection);
     this.hoststatus = HostStatus.Client;
     this.engine.emit("hostStatusChanged", { status: this.hoststatus });
+  }
+
+  getPingTime() {
+    return this.pings.reduce((a, b) => a + b, 0) / this.pings.length;
   }
 
   // Set up data handlers for sending/receiving messages
@@ -81,8 +78,7 @@ export class P2P {
       connection.on("data", this.handleData.bind(this));
       connection.on("close", () => {
         console.log(`Connection with ${connection.peer} closed`);
-        //@ts-ignore
-        delete this.connections[connection.peer];
+        this.connections.delete(connection.peer);
       });
     });
   }
@@ -93,12 +89,10 @@ export class P2P {
       this.isClientReady = true;
       this.sendData("PONG");
     } else if (data == "PONG") {
+      //mesure ping time
       this.pingtime = performance.now() - this.tstamp1;
       this.pings.push(this.pingtime);
       if (this.pings.length > 50) this.pings.shift();
-      console.log("PINGTIME: " + this.pingtime.toFixed(2) + "ms");
-      console.log("Average PINGS: " + this.pings.reduce((a, b) => a + b, 0) / this.pings.length);
-
       this.isClientReady = true;
     } else {
       if (!this.isClientReady) return;
@@ -108,7 +102,6 @@ export class P2P {
       switch (message[0]) {
         case "STATE":
           position = new Vector(parseFloat(message[2]), parseFloat(message[3]));
-
           ActorSignals.emit("updateActor", {
             UUID: message[1],
             position,
@@ -117,7 +110,6 @@ export class P2P {
           break;
         case "CREATE":
           position = new Vector(parseFloat(message[3]), parseFloat(message[4]));
-
           EngineSignals.emit("createActor", {
             type: message[1],
             UUID: message[2],

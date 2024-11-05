@@ -42,12 +42,5 @@ export class Main extends Scene {
     }
   }
 
-  onInitialize(engine: Engine): void {
-    EngineSignals.on("networkUpdate", (data: any) => {
-      if (this.p2p?.hoststatus == HostStatus.Host) {
-      } else {
-        console.log("network data", data);
-      }
-    });
-  }
+  onInitialize(engine: Engine): void {}
 }

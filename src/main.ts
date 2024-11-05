@@ -29,7 +29,6 @@ await game.start(loader);
 game.goToScene("intro");
 
 game.on("hostStatusChanged", data => {
-  console.log("hostStatusChanged", data);
   hideUI();
   game.goToScene("main", { sceneActivationData: [myP2P] });
 });
