@@ -1,4 +1,4 @@
-import { Engine, Scene, Vector } from "excalibur";
+import { Engine, KeyEvent, Keys, Scene, Vector } from "excalibur";
 import { P2P, HostStatus } from "../Lib/P2P";
 import { Player } from "../Actors/Player";
 import { Bug } from "../Actors/bug";
@@ -42,5 +42,11 @@ export class Main extends Scene {
     }
   }
 
-  onInitialize(engine: Engine): void {}
+  onInitialize(engine: Engine): void {
+    engine.input.keyboard.on("press", (key: KeyEvent) => {
+      if (this.p2p?.hoststatus == HostStatus.Host && key.key == Keys.Space) {
+        console.log("Average Ping: ", this.p2p?.getPingTime().toFixed(2), "ms");
+      }
+    });
+  }
 }
