@@ -1,8 +1,8 @@
-import { Animation, AnimationStrategy, Graphic } from "excalibur";
-import { playerSS, weaponSS, playerLegsSS } from "../resources";
+import { Animation, AnimationStrategy } from "excalibur";
+import { playerSS, player2SS } from "../resources";
 
 //#region playeranimations
-export const plyrAnimIdleDown = new Animation({
+export const plyr1AnimIdleDown = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
@@ -12,7 +12,7 @@ export const plyrAnimIdleDown = new Animation({
   ],
 });
 
-export const plyrAnimIdleUp = new Animation({
+export const plyr1AnimIdleUp = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
@@ -22,7 +22,7 @@ export const plyrAnimIdleUp = new Animation({
   ],
 });
 
-export const plyrAnimIdleRight = new Animation({
+export const plyr1AnimIdleRight = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
@@ -32,10 +32,10 @@ export const plyrAnimIdleRight = new Animation({
   ],
 });
 
-export let plyrAnimIdleLeft = plyrAnimIdleRight.clone();
-plyrAnimIdleLeft.flipHorizontal = true;
+export let plyr1AnimIdleLeft = plyr1AnimIdleRight.clone();
+plyr1AnimIdleLeft.flipHorizontal = true;
 
-export let plyrAnimIdleDownRight = new Animation({
+export let plyr1AnimIdleDownRight = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
@@ -45,7 +45,7 @@ export let plyrAnimIdleDownRight = new Animation({
   ],
 });
 
-export let plyrAnimIdleUpRight = new Animation({
+export let plyr1AnimIdleUpRight = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
@@ -55,13 +55,13 @@ export let plyrAnimIdleUpRight = new Animation({
   ],
 });
 
-export let plyrAnimIdleDownLeft = plyrAnimIdleDownRight.clone();
-plyrAnimIdleDownLeft.flipHorizontal = true;
+export let plyr1AnimIdleDownLeft = plyr1AnimIdleDownRight.clone();
+plyr1AnimIdleDownLeft.flipHorizontal = true;
 
-export let plyrAnimIdleUpLeft = plyrAnimIdleUpRight.clone();
-plyrAnimIdleUpLeft.flipHorizontal = true;
+export let plyr1AnimIdleUpLeft = plyr1AnimIdleUpRight.clone();
+plyr1AnimIdleUpLeft.flipHorizontal = true;
 
-export const plyrAnimWalkRight = new Animation({
+export const plyr1AnimWalkRight = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
@@ -83,10 +83,10 @@ export const plyrAnimWalkRight = new Animation({
   ],
 });
 
-export let plyrAnimWalkLeft = plyrAnimWalkRight.clone();
-plyrAnimWalkLeft.flipHorizontal = true;
+export let plyr1AnimWalkLeft = plyr1AnimWalkRight.clone();
+plyr1AnimWalkLeft.flipHorizontal = true;
 
-export const plyrAnimWalkDown = new Animation({
+export const plyr1AnimWalkDown = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
@@ -108,7 +108,7 @@ export const plyrAnimWalkDown = new Animation({
   ],
 });
 
-export const plyrAnimWalkUp = new Animation({
+export const plyr1AnimWalkUp = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
@@ -130,7 +130,7 @@ export const plyrAnimWalkUp = new Animation({
   ],
 });
 
-export const plyrAnimWalkDownRight = new Animation({
+export const plyr1AnimWalkDownRight = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
@@ -152,10 +152,10 @@ export const plyrAnimWalkDownRight = new Animation({
   ],
 });
 
-export let plyrAnimWalkDownLeft = plyrAnimWalkDownRight.clone();
-plyrAnimWalkDownLeft.flipHorizontal = true;
+export let plyr1AnimWalkDownLeft = plyr1AnimWalkDownRight.clone();
+plyr1AnimWalkDownLeft.flipHorizontal = true;
 
-export const plyrAnimWalkUpRight = new Animation({
+export const plyr1AnimWalkUpRight = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
@@ -177,313 +177,189 @@ export const plyrAnimWalkUpRight = new Animation({
   ],
 });
 
-export let plyrAnimWalkUpLeft = plyrAnimWalkUpRight.clone();
-plyrAnimWalkUpLeft.flipHorizontal = true;
+export let plyr1AnimWalkUpLeft = plyr1AnimWalkUpRight.clone();
+plyr1AnimWalkUpLeft.flipHorizontal = true;
 
 //#endregion playeranimations
 
-//#region weaponanimations
-export const weaponAnimIdleDown = new Animation({
+//#region player2animations
+
+export const plyr2AnimIdleDown = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
-      graphic: weaponSS.getSprite(0, 0),
+      graphic: player2SS.getSprite(0, 0),
       duration: 150,
     },
   ],
 });
 
-export const weaponAnimIdleUp = new Animation({
+export const plyr2AnimIdleUp = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
-      graphic: weaponSS.getSprite(0, 2),
+      graphic: player2SS.getSprite(0, 1),
       duration: 150,
     },
   ],
 });
 
-export const weaponAnimIdleRight = new Animation({
+export const plyr2AnimIdleRight = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
-      graphic: weaponSS.getSprite(0, 3),
+      graphic: player2SS.getSprite(0, 2),
       duration: 150,
     },
   ],
 });
 
-export const weaponAnimIdleLeft = weaponAnimIdleRight.clone();
-weaponAnimIdleLeft.flipHorizontal = true;
+export let plyr2AnimIdleLeft = plyr2AnimIdleRight.clone();
+plyr1AnimIdleLeft.flipHorizontal = true;
 
-export let weaponAnimIdleDownRight = new Animation({
+export let plyr2AnimIdleDownRight = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
-      graphic: weaponSS.getSprite(0, 3),
+      graphic: player2SS.getSprite(0, 3),
       duration: 150,
     },
   ],
 });
 
-export let weaponAnimIdleDownLeft = weaponAnimIdleDownRight.clone();
-weaponAnimIdleDownLeft.flipHorizontal = true;
-
-export let weaponAnimIdleUpRight = new Animation({
+export let plyr2AnimIdleUpRight = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
-      graphic: weaponSS.getSprite(0, 4),
+      graphic: player2SS.getSprite(0, 4),
       duration: 150,
     },
   ],
 });
 
-export let weaponAnimIdleUpLeft = weaponAnimIdleUpRight.clone();
-weaponAnimIdleUpLeft.flipHorizontal = true;
+export let plyr2AnimIdleDownLeft = plyr2AnimIdleDownRight.clone();
+plyr1AnimIdleDownLeft.flipHorizontal = true;
 
-export const weaponAnimWalkRight = new Animation({
+export let plyr2AnimIdleUpLeft = plyr2AnimIdleUpRight.clone();
+plyr1AnimIdleUpLeft.flipHorizontal = true;
+
+export const plyr2AnimWalkRight = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
-      graphic: weaponSS.getSprite(1, 2),
+      graphic: player2SS.getSprite(1, 2),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(0, 2),
+      graphic: player2SS.getSprite(0, 2),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(2, 2),
+      graphic: player2SS.getSprite(2, 2),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(0, 2),
+      graphic: player2SS.getSprite(0, 2),
       duration: 150,
     },
   ],
 });
 
-export let weaponAnimWalkLeft = weaponAnimWalkRight.clone();
-weaponAnimWalkLeft.flipHorizontal = true;
+export let plyr2AnimWalkLeft = plyr2AnimWalkRight.clone();
+plyr1AnimWalkLeft.flipHorizontal = true;
 
-export const weaponAnimWalkDown = new Animation({
+export const plyr2AnimWalkDown = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
-      graphic: weaponSS.getSprite(1, 0),
+      graphic: player2SS.getSprite(1, 0),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(0, 0),
+      graphic: player2SS.getSprite(0, 0),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(2, 0),
+      graphic: player2SS.getSprite(2, 0),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(0, 0),
+      graphic: player2SS.getSprite(0, 0),
       duration: 150,
     },
   ],
 });
 
-export const weaponAnimWalkUp = new Animation({
+export const plyr2AnimWalkUp = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
-      graphic: weaponSS.getSprite(1, 1),
+      graphic: player2SS.getSprite(1, 1),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(0, 1),
+      graphic: player2SS.getSprite(0, 1),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(2, 1),
+      graphic: player2SS.getSprite(2, 1),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(0, 1),
+      graphic: player2SS.getSprite(0, 1),
       duration: 150,
     },
   ],
 });
 
-export const weaponAnimWalkDownRight = new Animation({
+export const plyr2AnimWalkDownRight = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
-      graphic: weaponSS.getSprite(1, 3),
+      graphic: player2SS.getSprite(1, 3),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(0, 3),
+      graphic: player2SS.getSprite(0, 3),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(2, 3),
+      graphic: player2SS.getSprite(2, 3),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(0, 3),
+      graphic: player2SS.getSprite(0, 3),
       duration: 150,
     },
   ],
 });
 
-export let weaponAnimWalkDownLeft = weaponAnimWalkDownRight.clone();
-weaponAnimWalkDownLeft.flipHorizontal = true;
+export let plyr2AnimWalkDownLeft = plyr2AnimWalkDownRight.clone();
+plyr1AnimWalkDownLeft.flipHorizontal = true;
 
-export const weaponAnimWalkUpRight = new Animation({
+export const plyr2AnimWalkUpRight = new Animation({
   strategy: AnimationStrategy.Loop,
   frames: [
     {
-      graphic: weaponSS.getSprite(1, 4),
+      graphic: player2SS.getSprite(1, 4),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(0, 4),
+      graphic: player2SS.getSprite(0, 4),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(2, 4),
+      graphic: player2SS.getSprite(2, 4),
       duration: 150,
     },
     {
-      graphic: weaponSS.getSprite(0, 4),
+      graphic: player2SS.getSprite(0, 4),
       duration: 150,
     },
   ],
 });
 
-export let weaponAnimWalkUpLeft = weaponAnimWalkUpRight.clone();
-weaponAnimWalkUpLeft.flipHorizontal = true;
+export let plyr2AnimWalkUpLeft = plyr1AnimWalkUpRight.clone();
+plyr1AnimWalkUpLeft.flipHorizontal = true;
 
-//#endregion weaponanimations
-
-//#region player legs animations
-
-export const plyrLegsAnimIdleDown = new Animation({
-  strategy: AnimationStrategy.Loop,
-  frames: [
-    {
-      graphic: playerLegsSS.getSprite(0, 0),
-      duration: 150,
-    },
-  ],
-});
-
-export const plyrLegsAnimIdleRight = new Animation({
-  strategy: AnimationStrategy.Loop,
-  frames: [
-    {
-      graphic: playerLegsSS.getSprite(0, 1),
-      duration: 150,
-    },
-  ],
-});
-
-export const plyrLegsAnimIdleLeft = plyrLegsAnimIdleRight.clone();
-plyrLegsAnimIdleLeft.flipHorizontal = true;
-
-export const plyrLegsAnimIdleUp = plyrLegsAnimIdleDown.clone();
-
-export const plyrLegsAnimWalkDown = new Animation({
-  strategy: AnimationStrategy.Loop,
-  frames: [
-    {
-      graphic: playerLegsSS.getSprite(1, 0),
-      duration: 150,
-    },
-    {
-      graphic: playerLegsSS.getSprite(0, 0),
-      duration: 150,
-    },
-    {
-      graphic: playerLegsSS.getSprite(2, 0),
-      duration: 150,
-    },
-    {
-      graphic: playerLegsSS.getSprite(0, 0),
-      duration: 150,
-    },
-  ],
-});
-
-export const plyrLegsAnimWalkUp = plyrLegsAnimWalkDown.clone();
-
-export const plyrLegsAnimWalkRight = new Animation({
-  strategy: AnimationStrategy.Loop,
-  frames: [
-    {
-      graphic: playerLegsSS.getSprite(1, 1),
-      duration: 150,
-    },
-    {
-      graphic: playerLegsSS.getSprite(0, 1),
-      duration: 150,
-    },
-    {
-      graphic: playerLegsSS.getSprite(2, 1),
-      duration: 150,
-    },
-    {
-      graphic: playerLegsSS.getSprite(0, 1),
-      duration: 150,
-    },
-  ],
-});
-
-export const plyrLegsAnimWalkLeft = plyrLegsAnimWalkRight.clone();
-plyrLegsAnimWalkLeft.flipHorizontal = true;
-
-export const plyrLegsAnimIdleUpLeft = new Animation({
-  strategy: AnimationStrategy.Loop,
-  frames: [
-    {
-      graphic: playerLegsSS.getSprite(0, 2),
-      duration: 150,
-    },
-  ],
-});
-
-export const plyrLegsAnimIdleUpRight = plyrLegsAnimIdleUpLeft.clone();
-plyrLegsAnimIdleUpRight.flipHorizontal = true;
-
-export const plyrLegsAnimIdleDownRight = plyrLegsAnimIdleUpLeft.clone();
-
-export const plyrLegsAnimIdleDownLeft = plyrLegsAnimIdleUpRight.clone();
-plyrLegsAnimIdleDownLeft.flipHorizontal = true;
-
-export const plyrLegsAnimWalkUpRight = new Animation({
-  strategy: AnimationStrategy.Loop,
-  frames: [
-    {
-      graphic: playerLegsSS.getSprite(1, 2),
-      duration: 150,
-    },
-    {
-      graphic: playerLegsSS.getSprite(0, 2),
-      duration: 150,
-    },
-    {
-      graphic: playerLegsSS.getSprite(2, 2),
-      duration: 150,
-    },
-    {
-      graphic: playerLegsSS.getSprite(0, 2),
-      duration: 150,
-    },
-  ],
-});
-
-export const plyrLegsAnimWalkUpLeft = plyrLegsAnimWalkUpRight.clone();
-plyrLegsAnimWalkUpLeft.flipHorizontal = true;
-
-export const plyrLegsAnimWalkDownRight = plyrLegsAnimWalkUpRight.clone();
-
-export const plyrLegsAnimWalkDownLeft = plyrLegsAnimWalkUpRight.clone();
-plyrAnimWalkDownLeft.flipHorizontal = true;
-//#endregion
+//#endregion player2animations

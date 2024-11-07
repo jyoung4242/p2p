@@ -1,12 +1,19 @@
 import { Peer, DataConnection } from "peerjs";
 import { model } from "../UI/UI";
-import { Engine, Vector } from "excalibur";
+import { Actor, Engine, Vector } from "excalibur";
 import { ActorSignals, EngineSignals } from "./CustomEmitterManager";
 
 export enum HostStatus {
   NotHost = 0,
   Host = 1,
   Client = 2,
+}
+
+export enum NW_MessageType {
+  StateUpdate = 0,
+  Creation = 1,
+  Deletion = 2,
+  InputUpdate = 3,
 }
 
 export class P2P {
@@ -100,6 +107,13 @@ export class P2P {
       const message = data.split("|");
       let position;
       switch (message[0]) {
+        case "INPUT":
+          console.log("input", message);
+
+          const direction = message[1];
+          const uuid = message[2];
+          ActorSignals.emit("updateActorInput", { direction, uuid });
+          break;
         case "STATE":
           position = new Vector(parseFloat(message[2]), parseFloat(message[3]));
           ActorSignals.emit("updateActor", {

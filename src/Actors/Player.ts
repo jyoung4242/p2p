@@ -1,63 +1,59 @@
-import { Actor, Engine, Vector, Graphic, Material, toRadians, Ray, Debug, Color, Collider, CollisionContact, Side } from "excalibur";
+import {
+  Actor,
+  Engine,
+  Vector,
+  Graphic,
+  Material,
+  toRadians,
+  Ray,
+  Debug,
+  Color,
+  Collider,
+  CollisionContact,
+  Side,
+  KeyEvent,
+  Keys,
+} from "excalibur";
 import { ExFSM, ExState } from "../Lib/ExFSM";
 import { tintShader } from "../Shaders/tint";
 import {
-  plyrAnimIdleDown,
-  plyrAnimIdleDownLeft,
-  plyrAnimIdleDownRight,
-  plyrAnimIdleLeft,
-  plyrAnimIdleRight,
-  plyrAnimIdleUp,
-  plyrAnimIdleUpLeft,
-  plyrAnimIdleUpRight,
-  plyrAnimWalkDown,
-  plyrAnimWalkDownLeft,
-  plyrAnimWalkDownRight,
-  plyrAnimWalkLeft,
-  plyrAnimWalkRight,
-  plyrAnimWalkUp,
-  plyrAnimWalkUpLeft,
-  plyrAnimWalkUpRight,
-  weaponAnimIdleDown,
-  weaponAnimIdleDownLeft,
-  weaponAnimIdleDownRight,
-  weaponAnimIdleLeft,
-  weaponAnimIdleRight,
-  weaponAnimIdleUp,
-  weaponAnimIdleUpLeft,
-  weaponAnimIdleUpRight,
-  weaponAnimWalkDown,
-  weaponAnimWalkDownLeft,
-  weaponAnimWalkDownRight,
-  weaponAnimWalkLeft,
-  weaponAnimWalkRight,
-  weaponAnimWalkUp,
-  weaponAnimWalkUpLeft,
-  weaponAnimWalkUpRight,
-  plyrLegsAnimIdleDown,
-  plyrLegsAnimIdleDownLeft,
-  plyrLegsAnimIdleDownRight,
-  plyrLegsAnimIdleLeft,
-  plyrLegsAnimIdleRight,
-  plyrLegsAnimIdleUp,
-  plyrLegsAnimIdleUpLeft,
-  plyrLegsAnimIdleUpRight,
-  plyrLegsAnimWalkDown,
-  plyrLegsAnimWalkDownLeft,
-  plyrLegsAnimWalkDownRight,
-  plyrLegsAnimWalkLeft,
-  plyrLegsAnimWalkRight,
-  plyrLegsAnimWalkUp,
-  plyrLegsAnimWalkUpLeft,
-  plyrLegsAnimWalkUpRight,
+  plyr1AnimIdleDown,
+  plyr1AnimIdleDownLeft,
+  plyr1AnimIdleDownRight,
+  plyr1AnimIdleLeft,
+  plyr1AnimIdleRight,
+  plyr1AnimIdleUp,
+  plyr1AnimIdleUpLeft,
+  plyr1AnimIdleUpRight,
+  plyr1AnimWalkDown,
+  plyr1AnimWalkDownLeft,
+  plyr1AnimWalkDownRight,
+  plyr1AnimWalkLeft,
+  plyr1AnimWalkRight,
+  plyr1AnimWalkUp,
+  plyr1AnimWalkUpLeft,
+  plyr1AnimWalkUpRight,
+  plyr2AnimIdleDown,
+  plyr2AnimIdleDownLeft,
+  plyr2AnimIdleDownRight,
+  plyr2AnimIdleLeft,
+  plyr2AnimIdleRight,
+  plyr2AnimIdleUp,
+  plyr2AnimIdleUpLeft,
+  plyr2AnimIdleUpRight,
+  plyr2AnimWalkDown,
+  plyr2AnimWalkDownLeft,
+  plyr2AnimWalkDownRight,
+  plyr2AnimWalkLeft,
+  plyr2AnimWalkRight,
+  plyr2AnimWalkUp,
+  plyr2AnimWalkUpLeft,
+  plyr2AnimWalkUpRight,
 } from "../Animations/playerAnimations";
 import { ActorSignals } from "../Lib/CustomEmitterManager";
 import { muzzleFlashAnim } from "../Animations/muzzleflashAnimation";
-import { playerColliders } from "../main";
-import { Wall } from "../Lib/roomBuilder";
-import { Bug } from "./bug";
-import { WeaponSystem, WeaponType } from "../Components/Weapon";
-import { Spreader } from "../Components/Weapons/Spreader";
+import { NW_MessageType, P2P } from "../Lib/P2P";
+import { UUID } from "../Lib/UUID";
 
 enum StickPosition {
   "Left" = "Left",
@@ -128,166 +124,33 @@ const VectorDirMap = {
   downRight: Vector.Down.add(Vector.Right),
 };
 
-class Muzzleflash extends Actor {
-  weaponSystem: WeaponSystem;
-  direction: Direction = "Down";
-  vecDir: Vector = VectorDirMap[this.direction];
-  isVisible: boolean = false;
-  muzzleGraphics: Graphic;
-  flashMaterial: Material | null = null;
-  flashColor: Color = Color.fromHex("#63DEFF");
-  fireRateLimit = 10;
-  fireRateTik = 0;
-  constructor(private owner: Upper) {
-    super({
-      name: "muzzleflash",
-      width: 12,
-      height: 12,
-      anchor: Vector.Half,
-      pos: new Vector(7.5, 26),
-      scale: new Vector(1, 1),
-      z: 5,
-    });
-    this.muzzleGraphics = muzzleFlashAnim;
-    this.rotation = toRadians(90);
-    this.z = -1;
-    this.weaponSystem = new WeaponSystem(this);
-    this.addComponent(this.weaponSystem);
-  }
-
-  setState(direction: Direction) {
-    this.direction = direction;
-  }
-
-  fireRay(engine: Engine) {
-    const convertedDirection = VectorDirMap[this.direction];
-
-    const ray = new Ray(this.getGlobalPos(), convertedDirection);
-    Debug.drawRay(ray, { color: Color.Red, distance: 2000 });
-    const hits = engine.currentScene.physics.rayCast(ray, {
-      searchAllColliders: false,
-      collisionMask: 0b1100,
-      ignoreCollisionGroupAll: true,
-      maxDistance: 2000,
-    });
-
-    if (hits && hits.length > 0) {
-      if (hits[0].body.owner instanceof Bug) {
-        hits[0].body.owner.showDamage(convertedDirection);
-      } else if (hits[0].body.owner instanceof Wall) {
-        hits[0].body.owner.showSparks(engine, hits[0].point);
-      }
-    }
-
-    return hits;
-  }
-
-  onInitialize(engine: Engine): void {
-    this.graphics.use(this.muzzleGraphics);
-    this.graphics.hide();
-    ActorSignals.on("shoot", data => {
-      if (this.owner.isArmed) this.isVisible = true;
-    });
-    ActorSignals.on("stopshoot", data => {
-      console.log("stopshoot");
-
-      this.isVisible = false;
-    });
-
-    //setup tint shader
-    this.flashMaterial = engine.graphicsContext.createMaterial({
-      name: "outline",
-      fragmentSource: tintShader,
-    });
-    this.graphics.material = this.flashMaterial;
-    if (this.flashMaterial) this.flashMaterial.use();
-
-    this.flashMaterial.update(shader => {
-      shader.setUniform("uniform3f", "U_color", this.flashColor.r / 255, this.flashColor.g / 255, this.flashColor.b / 255);
-    });
-
-    // Signals
-    ActorSignals.on("walkLeft", data => this.setState("Left"));
-    ActorSignals.on("walkRight", data => this.setState("Right"));
-    ActorSignals.on("walkDown", data => this.setState("Down"));
-    ActorSignals.on("walkUp", data => this.setState("Up"));
-    ActorSignals.on("walkUpRight", data => this.setState("upRight"));
-    ActorSignals.on("walkDownLeft", data => this.setState("downLeft"));
-    ActorSignals.on("walkDownRight", data => this.setState("downRight"));
-    ActorSignals.on("walkUpLeft", data => this.setState("upLeft"));
-    ActorSignals.on("rightStickLeft", data => this.setState("Left"));
-    ActorSignals.on("rightStickRight", data => this.setState("Right"));
-    ActorSignals.on("rightStickDown", data => this.setState("Down"));
-    ActorSignals.on("rightStickUp", data => this.setState("Up"));
-    ActorSignals.on("rightStickUpRight", data => this.setState("upRight"));
-    ActorSignals.on("rightStickDownLeft", data => this.setState("downLeft"));
-    ActorSignals.on("rightStickDownRight", data => this.setState("downRight"));
-    ActorSignals.on("rightStickUpLeft", data => this.setState("upLeft"));
-    this.weaponSystem.loadWeapon(new Spreader());
-    this.flashColor = this.weaponSystem.switchWeapon(WeaponType.spreader);
-    console.log("starting color", this.flashColor);
-
-    ActorSignals.on("outOfAmmo", data => {
-      console.log("out of ammo");
-      this.flashColor = this.weaponSystem.switchWeapon(WeaponType.primary);
-      console.log("new color", this.flashColor);
-    });
-  }
-
-  onPreUpdate(engine: Engine, delta: number): void {
-    this.vecDir = VectorDirMap[this.direction];
-
-    if (this.flashMaterial)
-      this.flashMaterial.update(shader => {
-        shader.setUniform("uniform3f", "U_color", this.flashColor.r / 255, this.flashColor.g / 255, this.flashColor.b / 255);
-      });
-
-    if (this.isVisible) {
-      this.pos = MuzzleMap[this.direction].position;
-      this.rotation = toRadians(MuzzleMap[this.direction].angle);
-      this.z = MuzzleMap[this.direction].z;
-      this.graphics.use(this.muzzleGraphics);
-
-      if (this.weaponSystem.currentWeapon == "primary") {
-        this.weaponSystem.setFiringStatus(false);
-        this.fireRateTik++;
-        if (this.fireRateTik > this.fireRateLimit) {
-          this.fireRateTik = 0;
-          this.fireRay(engine);
-        }
-      } else this.weaponSystem.setFiringStatus(true);
-    } else {
-      this.graphics.hide();
-      this.weaponSystem.setFiringStatus(false);
-    }
-  }
-}
-
-class Upper extends Actor {
-  facing: Direction;
-  gamePadDetected: boolean = false;
-  lStick: StickPosition = StickPosition.Idle;
-  rStick: StickPosition = StickPosition.Idle;
-  isArmed: boolean = true;
+export class Player extends Actor {
+  oldstate: ExState | undefined;
+  UUID = UUID.generateUUID();
   fsm: ExFSM;
-  muzzleFlash: Muzzleflash = new Muzzleflash(this);
-  constructor() {
+  facing: Direction = "Down";
+  collisionDirection: Array<"left" | "right" | "top" | "bottom"> = [];
+  lStick: StickPosition;
+  rStick: StickPosition;
+  constructor(pos: Vector, public P2P: P2P, public type: 1 | 2) {
     super({
-      name: "upper",
+      name: "player",
       width: 24,
       height: 24,
-      z: 2,
       anchor: Vector.Zero,
+      z: 4,
+      scale: new Vector(2, 2),
+      pos,
     });
-
+    if (this.type == 1) this.graphics.use(plyr1AnimIdleDown);
+    else this.graphics.use(plyr2AnimIdleDown);
+    this.lStick = StickPosition.Idle;
+    this.rStick = StickPosition.Idle;
     this.fsm = new ExFSM(this);
-    this.facing = "Down";
-    this.addChild(this.muzzleFlash);
+    console.log("my uuid: ", this.UUID);
   }
 
   onInitialize(engine: Engine): void {
-    ActorSignals.on("gamepadDetected", data => (this.gamePadDetected = true));
-
     ActorSignals.on("leftStickDown", data => (this.lStick = StickPosition.Down));
     ActorSignals.on("leftStickUp", data => (this.lStick = StickPosition.Up));
     ActorSignals.on("leftStickLeft", data => (this.lStick = StickPosition.Left));
@@ -326,21 +189,40 @@ class Upper extends Actor {
     this.fsm.register(new playerAnimWalkUpRight(this.fsm));
     this.fsm.register(new playerAnimWalkUpLeft(this.fsm));
     this.fsm.set("idleDown");
+    this.oldstate = this.fsm.get();
 
-    ActorSignals.on("toggleArm", data => {
-      if (this.isArmed) this.isArmed = false;
-      else this.isArmed = true;
+    this.sendNetworkData(NW_MessageType.Creation);
+
+    engine.currentScene.input.keyboard.on("press", (key: KeyEvent) => {
+      if (key.key == Keys.ArrowUp) {
+        this.pos.y -= 10;
+      } else if (key.key == Keys.ArrowDown) {
+        this.pos.y += 10;
+      } else if (key.key == Keys.ArrowLeft) {
+        this.pos.x -= 10;
+      } else if (key.key == Keys.ArrowRight) {
+        this.pos.x += 10;
+      }
     });
   }
 
+  sendNetworkData(type: NW_MessageType) {
+    switch (type) {
+      case NW_MessageType.StateUpdate:
+        if (this.P2P.isClientReady) this.P2P.sendData(`STATE|${this.UUID}|${this.pos.x}|${this.pos.y}|${this.rotation}`);
+        break;
+      case NW_MessageType.Creation:
+        this.P2P.sendData(`CREATE|NWPlayer|${this.UUID}|${this.pos.x}|${this.pos.y}|${this.type}`);
+        break;
+      case NW_MessageType.Deletion:
+        this.P2P.sendData(`DELETE|${this.UUID}`);
+        break;
+    }
+  }
+
   onPreUpdate(engine: Engine, delta: number): void {
-    let animstate;
-
-    if (this.gamePadDetected && this.isArmed && this.rStick != StickPosition.Idle) {
-      this.muzzleFlash.setState(this.rStick);
-      this.muzzleFlash.isVisible = true;
-    } else if (this.gamePadDetected && this.isArmed && this.rStick == StickPosition.Idle) this.muzzleFlash.isVisible = false;
-
+    let playvelocity = 50;
+    let animstate: string;
     if (this.lStick == StickPosition.Idle && this.rStick != StickPosition.Idle) {
       //idle
       animstate = "idle" + this.rStick;
@@ -353,439 +235,89 @@ class Upper extends Actor {
       //idle idle
       animstate = "idle" + this.facing;
     }
-    //idle
-    this.fsm.set(animstate);
+
+    // do this if state changes
+    if (this.oldstate?.name != animstate) {
+      this.fsm.set(animstate);
+      this.oldstate = this.fsm.get();
+    }
     this.fsm.update();
-  }
-}
-
-class Lower extends Actor {
-  facing: Direction;
-  lStick: StickPosition = StickPosition.Idle;
-  rStick: StickPosition = StickPosition.Idle;
-  fsm: ExFSM;
-
-  constructor() {
-    super({
-      name: "lower",
-      width: 24,
-      height: 24,
-      z: 1,
-      anchor: Vector.Zero,
-    });
-
-    this.fsm = new ExFSM(this);
-    this.facing = "Down";
-  }
-
-  onInitialize(engine: Engine): void {
-    ActorSignals.on("leftStickDown", data => (this.lStick = StickPosition.Down));
-    ActorSignals.on("leftStickUp", data => (this.lStick = StickPosition.Up));
-    ActorSignals.on("leftStickLeft", data => (this.lStick = StickPosition.Left));
-    ActorSignals.on("leftStickRight", data => (this.lStick = StickPosition.Right));
-    ActorSignals.on("leftStickDownLeft", data => (this.lStick = StickPosition.DownLeft));
-    ActorSignals.on("leftStickDownRight", data => (this.lStick = StickPosition.DownRight));
-    ActorSignals.on("leftStickUpLeft", data => (this.lStick = StickPosition.UpLeft));
-    ActorSignals.on("leftStickUpRight", data => (this.lStick = StickPosition.UpRight));
-    ActorSignals.on("leftStickIdle", data => (this.lStick = StickPosition.Idle));
-
-    ActorSignals.on("rightStickDown", data => (this.rStick = StickPosition.Down));
-    ActorSignals.on("rightStickUp", data => (this.rStick = StickPosition.Up));
-    ActorSignals.on("rightStickLeft", data => (this.rStick = StickPosition.Left));
-    ActorSignals.on("rightStickRight", data => (this.rStick = StickPosition.Right));
-    ActorSignals.on("rightStickDownLeft", data => (this.rStick = StickPosition.DownLeft));
-    ActorSignals.on("rightStickDownRight", data => (this.rStick = StickPosition.DownRight));
-    ActorSignals.on("rightStickUpLeft", data => (this.rStick = StickPosition.UpLeft));
-    ActorSignals.on("rightStickUpRight", data => (this.rStick = StickPosition.UpRight));
-    ActorSignals.on("rightStickIdle", data => (this.rStick = StickPosition.Idle));
-
-    this.fsm.register(new LowerIdleDown(this.fsm));
-    this.fsm.register(new LowerIdleUp(this.fsm));
-    this.fsm.register(new LowerIdleLeft(this.fsm));
-    this.fsm.register(new LowerIdleRight(this.fsm));
-    this.fsm.register(new LowerIdleUpRight(this.fsm));
-    this.fsm.register(new LowerIdleUpLeft(this.fsm));
-    this.fsm.register(new LowerIdleDownRight(this.fsm));
-    this.fsm.register(new LowerIdleDownLeft(this.fsm));
-    this.fsm.register(new LowerWalkDown(this.fsm));
-    this.fsm.register(new LowerWalkUp(this.fsm));
-    this.fsm.register(new LowerWalkLeft(this.fsm));
-    this.fsm.register(new LowerWalkRight(this.fsm));
-    this.fsm.register(new LowerWalkDownRight(this.fsm));
-    this.fsm.register(new LowerWalkDownLeft(this.fsm));
-    this.fsm.register(new LowerWalkUpRight(this.fsm));
-    this.fsm.register(new LowerWalkUpLeft(this.fsm));
-
-    this.fsm.set("lowerIdleDown");
-  }
-
-  onPreUpdate(engine: Engine, delta: number): void {
-    if (this.lStick == StickPosition.Idle) {
-      //left stick Idle, use Right Stick to pick idle direction
-      switch (this.rStick) {
-        case StickPosition.Down:
-          this.fsm.set("lowerIdleDown");
-          this.facing = "Down";
-          break;
-        case StickPosition.Up:
-          this.fsm.set("lowerIdleUp");
-          this.facing = "Up";
-          break;
-        case StickPosition.Left:
-          this.fsm.set("lowerIdleLeft");
-          this.facing = "Left";
-          break;
-        case StickPosition.Right:
-          this.fsm.set("lowerIdleRight");
-          this.facing = "Right";
-          break;
-        case StickPosition.DownLeft:
-          this.fsm.set("lowerIdleDownLeft");
-          this.facing = "downLeft";
-          break;
-        case StickPosition.DownRight:
-          this.fsm.set("lowerIdleDownRight");
-          this.facing = "downRight";
-          break;
-        case StickPosition.UpLeft:
-          this.fsm.set("lowerIdleUpLeft");
-          this.facing = "upLeft";
-          break;
-        case StickPosition.UpRight:
-          this.fsm.set("lowerIdleUpRight");
-          this.facing = "upRight";
-          break;
-        default:
-          switch (this.facing) {
-            case "Left":
-              this.fsm.set("lowerIdleLeft");
-              break;
-            case "Right":
-              this.fsm.set("lowerIdleRight");
-              break;
-            case "Up":
-              this.fsm.set("lowerIdleUp");
-              break;
-            case "Down":
-              this.fsm.set("lowerIdleDown");
-              break;
-            case "upLeft":
-              this.fsm.set("lowerIdleUpLeft");
-              break;
-            case "upRight":
-              this.fsm.set("lowerIdleRight");
-              break;
-            case "downLeft":
-              this.fsm.set("lowerIdleDownLeft");
-              break;
-            case "downRight":
-              this.fsm.set("lowerIdleDownRight");
-              break;
-          }
-          break;
-      }
-    } else {
-      let animation;
-      if (checkForOpposite(this.lStick, this.rStick)) {
-        // walk backwards
-        animation = reverseDirection[this.lStick];
-      } else {
-        // use lstick
-        animation = trueDirection[this.lStick];
-      }
-      this.fsm.set(animation);
-    }
-
-    this.fsm.update();
-  }
-}
-
-export class Player extends Actor {
-  collisionDirection: Array<"left" | "right" | "top" | "bottom"> = [];
-  upper: Upper = new Upper();
-  lower: Lower = new Lower();
-  constructor() {
-    super({
-      name: "player",
-      width: 24,
-      height: 24,
-      anchor: Vector.Zero,
-      z: 4,
-      scale: new Vector(2, 2),
-      pos: new Vector(250, 250),
-      collisionGroup: playerColliders,
-    });
-
-    this.addChild(this.upper);
-    this.addChild(this.lower);
-  }
-
-  onCollisionStart(self: Collider, other: Collider, side: Side, lastContact: CollisionContact): void {
-    //test if other.owner is of a instance Wall
-    if (other.owner instanceof Wall) {
-      switch (side) {
-        case Side.None:
-          this.collisionDirection = [];
-          break;
-        case Side.Top:
-          //check array for top
-          if (this.collisionDirection.indexOf("top") == -1) {
-            this.collisionDirection.push("top");
-          }
-          break;
-        case Side.Bottom:
-          if (this.collisionDirection.indexOf("bottom") == -1) {
-            this.collisionDirection.push("bottom");
-          }
-          break;
-        case Side.Left:
-          if (this.collisionDirection.indexOf("left") == -1) {
-            this.collisionDirection.push("left");
-          }
-          break;
-        case Side.Right:
-          if (this.collisionDirection.indexOf("right") == -1) {
-            this.collisionDirection.push("right");
-          }
-          break;
-      }
-    }
-  }
-
-  onCollisionEnd(self: Collider, other: Collider, side: Side, lastContact: CollisionContact): void {
-    if (other.owner instanceof Wall) {
-      let index;
-      switch (side) {
-        case Side.None:
-          this.collisionDirection = [];
-          break;
-        case Side.Top:
-          index = this.collisionDirection.indexOf("top");
-          if (index > -1) this.collisionDirection.splice(index, 1);
-          break;
-        case Side.Bottom:
-          index = this.collisionDirection.indexOf("bottom");
-          if (index > -1) this.collisionDirection.splice(index, 1);
-          break;
-        case Side.Left:
-          index = this.collisionDirection.indexOf("left");
-          if (index > -1) this.collisionDirection.splice(index, 1);
-          break;
-        case Side.Right:
-          index = this.collisionDirection.indexOf("right");
-          if (index > -1) this.collisionDirection.splice(index, 1);
-          break;
-      }
-    }
-  }
-
-  onPreUpdate(engine: Engine, delta: number): void {
-    let playvelocity = 50;
-
-    switch (this.lower.lStick) {
-      case StickPosition.Left:
-        //add collision check
-        if (this.collisionDirection.indexOf("left") == -1) this.vel = new Vector(-playvelocity, 0);
-        else this.vel = new Vector(0, 0);
-        break;
-      case StickPosition.Right:
-        if (this.collisionDirection.indexOf("right") == -1) this.vel = new Vector(playvelocity, 0);
-        else this.vel = new Vector(0, 0);
-        break;
-      case StickPosition.Idle:
-        this.vel = new Vector(0, 0);
-        break;
-      case StickPosition.Up:
-        if (this.collisionDirection.indexOf("top") == -1) this.vel = new Vector(0, -playvelocity);
-        else this.vel = new Vector(0, 0);
-        break;
-      case StickPosition.Down:
-        if (this.collisionDirection.indexOf("bottom") == -1) this.vel = new Vector(0, playvelocity);
-        else this.vel = new Vector(0, 0);
-        break;
-      case StickPosition.UpLeft:
-        if (this.collisionDirection.indexOf("top") == -1 && this.collisionDirection.indexOf("left") == -1)
-          this.vel = new Vector(-playvelocity, -playvelocity);
-        else this.vel = new Vector(0, 0);
-        break;
-      case StickPosition.UpRight:
-        if (this.collisionDirection.indexOf("top") == -1 && this.collisionDirection.indexOf("right") == -1)
-          this.vel = new Vector(playvelocity, -playvelocity);
-        else this.vel = new Vector(0, 0);
-        break;
-      case StickPosition.DownLeft:
-        if (this.collisionDirection.indexOf("bottom") == -1 && this.collisionDirection.indexOf("left") == -1)
-          this.vel = new Vector(-playvelocity, playvelocity);
-        else this.vel = new Vector(0, 0);
-        break;
-      case StickPosition.DownRight:
-        if (this.collisionDirection.indexOf("bottom") == -1 && this.collisionDirection.indexOf("right") == -1)
-          this.vel = new Vector(playvelocity, playvelocity);
-        else this.vel = new Vector(0, 0);
-        break;
-    }
+    this.sendNetworkData(NW_MessageType.StateUpdate);
   }
 }
 
 //#region states
 
-class Idle extends ExState {
-  constructor(public machine: ExFSM) {
-    super("idle", machine);
-  }
-
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) {
-      switch (this.machine.owner.muzzleFlash.direction) {
-        case "up":
-          this.machine.owner.graphics.use(weaponAnimIdleUp);
-          break;
-        case "down":
-          this.machine.owner.graphics.use(weaponAnimIdleDown);
-          break;
-        case "left":
-          this.machine.owner.graphics.use(weaponAnimIdleLeft);
-          break;
-        case "right":
-          this.machine.owner.graphics.use(weaponAnimIdleRight);
-          break;
-        case "upleft":
-          this.machine.owner.graphics.use(weaponAnimIdleUpLeft);
-          break;
-        case "upright":
-          this.machine.owner.graphics.use(weaponAnimIdleUpRight);
-          break;
-        case "downleft":
-          this.machine.owner.graphics.use(weaponAnimIdleDownLeft);
-          break;
-        case "downright":
-          this.machine.owner.graphics.use(weaponAnimIdleDownRight);
-          break;
-      }
-    } else {
-      switch (this.machine.owner.muzzleFlash.direction) {
-        case "up":
-          this.machine.owner.graphics.use(plyrAnimIdleUp);
-          break;
-        case "down":
-          this.machine.owner.graphics.use(plyrAnimIdleDown);
-          break;
-        case "left":
-          this.machine.owner.graphics.use(plyrAnimIdleLeft);
-          break;
-        case "right":
-          this.machine.owner.graphics.use(plyrAnimIdleRight);
-          break;
-        case "upleft":
-          this.machine.owner.graphics.use(plyrAnimIdleUpLeft);
-          break;
-        case "upright":
-          this.machine.owner.graphics.use(plyrAnimIdleUpRight);
-          break;
-        case "downleft":
-          this.machine.owner.graphics.use(plyrAnimIdleDownLeft);
-          break;
-        case "downright":
-          this.machine.owner.graphics.use(plyrAnimIdleDownRight);
-          break;
-      }
-    }
-  }
-
-  update(...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) {
-      switch (this.machine.owner.muzzleFlash.direction) {
-        case "up":
-          this.machine.owner.graphics.use(weaponAnimIdleUp);
-          break;
-        case "down":
-          this.machine.owner.graphics.use(weaponAnimIdleDown);
-          break;
-        case "left":
-          this.machine.owner.graphics.use(weaponAnimIdleLeft);
-          break;
-        case "right":
-          this.machine.owner.graphics.use(weaponAnimIdleRight);
-          break;
-        case "upleft":
-          this.machine.owner.graphics.use(weaponAnimIdleUpLeft);
-          break;
-        case "upright":
-          this.machine.owner.graphics.use(weaponAnimIdleUpRight);
-          break;
-        case "downleft":
-          this.machine.owner.graphics.use(weaponAnimIdleDownLeft);
-          break;
-        case "downright":
-          this.machine.owner.graphics.use(weaponAnimIdleDownRight);
-          break;
-      }
-    } else {
-      switch (this.machine.owner.muzzleFlash.direction) {
-        case "up":
-          this.machine.owner.graphics.use(plyrAnimIdleUp);
-          break;
-        case "down":
-          this.machine.owner.graphics.use(plyrAnimIdleDown);
-          break;
-        case "left":
-          this.machine.owner.graphics.use(plyrAnimIdleLeft);
-          break;
-        case "right":
-          this.machine.owner.graphics.use(plyrAnimIdleRight);
-          break;
-        case "upleft":
-          this.machine.owner.graphics.use(plyrAnimIdleUpLeft);
-          break;
-        case "upright":
-          this.machine.owner.graphics.use(plyrAnimIdleUpRight);
-          break;
-        case "downleft":
-          this.machine.owner.graphics.use(plyrAnimIdleDownLeft);
-          break;
-        case "downright":
-          this.machine.owner.graphics.use(plyrAnimIdleDownRight);
-          break;
-      }
-    }
-  }
-}
-
 type AnimationKey =
-  | "plyrAnimIdleDownRight"
-  | "plyrAnimIdleDown"
-  | "plyrAnimIdleDownLeft"
-  | "plyrAnimIdleLeft"
-  | "plyrAnimIdleRight"
-  | "plyrAnimIdleUp"
-  | "plyrAnimIdleUpLeft"
-  | "plyrAnimIdleUpRight"
-  | "weaponAnimIdleDown"
-  | "weaponAnimIdleDownLeft"
-  | "weaponAnimIdleDownRight"
-  | "weaponAnimIdleLeft"
-  | "weaponAnimIdleRight"
-  | "weaponAnimIdleUp"
-  | "weaponAnimIdleUpLeft"
-  | "weaponAnimIdleUpRight";
+  | "plyr1AnimIdleDown"
+  | "plyr1AnimIdleLeft"
+  | "plyr1AnimIdleRight"
+  | "plyr1AnimIdleUp"
+  | "plyr1AnimIdleUpLeft"
+  | "plyr1AnimIdleUpRight"
+  | "plyr1AnimIdleDownLeft"
+  | "plyr1AnimIdleDownRight"
+  | "plyr1AnimWalkDown"
+  | "plyr1AnimWalkLeft"
+  | "plyr1AnimWalkRight"
+  | "plyr1AnimWalkUp"
+  | "plyr1AnimWalkUpLeft"
+  | "plyr1AnimWalkUpRight"
+  | "plyr1AnimWalkDownLeft"
+  | "plyr1AnimWalkDownRight"
+  | "plyr2AnimIdleDown"
+  | "plyr2AnimIdleLeft"
+  | "plyr2AnimIdleRight"
+  | "plyr2AnimIdleUp"
+  | "plyr2AnimIdleUpLeft"
+  | "plyr2AnimIdleUpRight"
+  | "plyr2AnimIdleDownLeft"
+  | "plyr2AnimIdleDownRight"
+  | "plyr2AnimWalkDown"
+  | "plyr2AnimWalkLeft"
+  | "plyr2AnimWalkRight"
+  | "plyr2AnimWalkUp"
+  | "plyr2AnimWalkUpLeft"
+  | "plyr2AnimWalkUpRight"
+  | "plyr2AnimWalkDownLeft"
+  | "plyr2AnimWalkDownRight";
 
 const animationMap = {
-  plyrAnimIdleDown,
-  plyrAnimIdleLeft,
-  plyrAnimIdleDownRight,
-  plyrAnimIdleUp,
-  plyrAnimIdleUpRight,
-  plyrAnimIdleUpLeft,
-  plyrAnimIdleRight,
-  plyrAnimIdleDownLeft,
-  weaponAnimIdleDown,
-  weaponAnimIdleDownLeft,
-  weaponAnimIdleDownRight,
-  weaponAnimIdleLeft,
-  weaponAnimIdleRight,
-  weaponAnimIdleUp,
-  weaponAnimIdleUpLeft,
-  weaponAnimIdleUpRight,
+  plyr1AnimIdleDown,
+  plyr1AnimIdleLeft,
+  plyr1AnimIdleRight,
+  plyr1AnimIdleUp,
+  plyr1AnimIdleUpLeft,
+  plyr1AnimIdleUpRight,
+  plyr1AnimIdleDownLeft,
+  plyr1AnimIdleDownRight,
+
+  plyr1AnimWalkDown,
+  plyr1AnimWalkLeft,
+  plyr1AnimWalkRight,
+  plyr1AnimWalkUp,
+  plyr1AnimWalkUpLeft,
+  plyr1AnimWalkUpRight,
+  plyr1AnimWalkDownLeft,
+  plyr1AnimWalkDownRight,
+
+  plyr2AnimIdleDown,
+  plyr2AnimIdleLeft,
+  plyr2AnimIdleRight,
+  plyr2AnimIdleUp,
+  plyr2AnimIdleUpLeft,
+  plyr2AnimIdleUpRight,
+  plyr2AnimIdleDownLeft,
+  plyr2AnimIdleDownRight,
+
+  plyr2AnimWalkDown,
+  plyr2AnimWalkLeft,
+  plyr2AnimWalkRight,
+  plyr2AnimWalkUp,
+  plyr2AnimWalkUpLeft,
+  plyr2AnimWalkUpRight,
+  plyr2AnimWalkDownLeft,
+  plyr2AnimWalkDownRight,
 };
 
 class IdleDown extends ExState {
@@ -794,23 +326,15 @@ class IdleDown extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleDown";
+    console.log(this.machine.owner);
 
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleDown);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleDown);
   }
 
   update(...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleDown";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleDown);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleDown);
   }
 }
 
@@ -820,23 +344,13 @@ class IdleUp extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleUp";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleUp);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleUp);
   }
 
   update(...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleUp";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleUp);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleUp);
   }
 }
 
@@ -846,23 +360,13 @@ class IdleLeft extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleLeft";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleLeft);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleLeft);
   }
 
   update(...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleLeft";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleLeft);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleLeft);
   }
 }
 
@@ -872,23 +376,13 @@ class IdleRight extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleRight";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleRight);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleRight);
   }
 
   update(...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleRight";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleRight);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleRight);
   }
 }
 
@@ -898,23 +392,13 @@ class IdleUpRight extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleUpRight";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleUpRight);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleUpRight);
   }
 
   update(...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleUpRight";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleUpRight);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleUpRight);
   }
 }
 class IdleUpLeft extends ExState {
@@ -923,23 +407,13 @@ class IdleUpLeft extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleUpLeft";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleUpLeft);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleUpLeft);
   }
 
   update(...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleUpLeft";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleUpLeft);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleUpLeft);
   }
 }
 
@@ -949,23 +423,13 @@ class IdleDownLeft extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleDownLeft";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleDownLeft);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleDownLeft);
   }
 
   update(...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleDownLeft";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleDownLeft);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleDownLeft);
   }
 }
 
@@ -975,23 +439,13 @@ class IdleDownRight extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleDownRight";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleDownRight);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleDownRight);
   }
 
   update(...params: any): void | Promise<void> {
-    let armedstate: AnimationKey;
-    let tempstring: string;
-    if (this.machine.owner.isArmed) tempstring = "weaponAnim";
-    else tempstring = "plyrAnim";
-    armedstate = tempstring + "IdleDownRight";
-
-    this.machine.owner.graphics.use(animationMap[armedstate as AnimationKey]);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimIdleDownRight);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimIdleDownRight);
   }
 }
 
@@ -1001,12 +455,13 @@ class playerAnimWalkLeft extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkLeft);
-    else this.machine.owner.graphics.use(plyrAnimWalkLeft);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkLeft);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkLeft);
   }
+
   update(...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkLeft);
-    else this.machine.owner.graphics.use(plyrAnimWalkLeft);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkLeft);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkLeft);
   }
 }
 
@@ -1016,13 +471,13 @@ class playerAnimWalkRight extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkRight);
-    else this.machine.owner.graphics.use(plyrAnimWalkRight);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkRight);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkRight);
   }
 
   update(...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkRight);
-    else this.machine.owner.graphics.use(plyrAnimWalkRight);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkRight);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkRight);
   }
 }
 
@@ -1032,12 +487,13 @@ class playerAnimWalkUp extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkUp);
-    else this.machine.owner.graphics.use(plyrAnimWalkUp);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkUp);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkUp);
   }
+
   update(...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkUp);
-    else this.machine.owner.graphics.use(plyrAnimWalkUp);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkUp);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkUp);
   }
 }
 
@@ -1047,13 +503,13 @@ class playerAnimWalkDown extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkDown);
-    else this.machine.owner.graphics.use(plyrAnimWalkDown);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkDown);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkDown);
   }
 
   update(...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkDown);
-    else this.machine.owner.graphics.use(plyrAnimWalkDown);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkDown);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkDown);
   }
 }
 
@@ -1063,13 +519,13 @@ class playerAnimWalkDownRight extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkDownRight);
-    else this.machine.owner.graphics.use(plyrAnimWalkDownRight);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkDownRight);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkDownRight);
   }
 
   update(...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkDownRight);
-    else this.machine.owner.graphics.use(plyrAnimWalkDownRight);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkDownRight);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkDownRight);
   }
 }
 
@@ -1079,13 +535,13 @@ class playerAnimWalkDownLeft extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkDownLeft);
-    else this.machine.owner.graphics.use(plyrAnimWalkDownLeft);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkDownLeft);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkDownLeft);
   }
 
   update(...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkDownLeft);
-    else this.machine.owner.graphics.use(plyrAnimWalkDownLeft);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkDownLeft);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkDownLeft);
   }
 }
 class playerAnimWalkUpRight extends ExState {
@@ -1094,13 +550,13 @@ class playerAnimWalkUpRight extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkUpRight);
-    else this.machine.owner.graphics.use(plyrAnimWalkUpRight);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkUpRight);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkUpRight);
   }
 
   update(...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkUpRight);
-    else this.machine.owner.graphics.use(plyrAnimWalkUpRight);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkUpRight);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkUpRight);
   }
 }
 
@@ -1110,222 +566,17 @@ class playerAnimWalkUpLeft extends ExState {
   }
 
   enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkUpLeft);
-    else this.machine.owner.graphics.use(plyrAnimWalkUpLeft);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkUpLeft);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkUpLeft);
   }
 
   update(...params: any): void | Promise<void> {
-    if (this.machine.owner.isArmed) this.machine.owner.graphics.use(weaponAnimWalkUpLeft);
-    else this.machine.owner.graphics.use(plyrAnimWalkUpLeft);
+    if (this.machine.owner.type == 1) this.machine.owner.graphics.use(plyr1AnimWalkUpLeft);
+    else if (this.machine.owner.type == 2) this.machine.owner.graphics.use(plyr2AnimWalkUpLeft);
   }
 }
 
 //#endregion states
-
-//#region lowerstates
-
-class LowerIdleDown extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerIdleDown", machine);
-  }
-
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleDown);
-  }
-
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleDown);
-  }
-}
-
-class LowerIdleUp extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerIdleUp", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleUp);
-  }
-
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleUp);
-  }
-}
-class LowerIdleLeft extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerIdleLeft", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleLeft);
-  }
-
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleLeft);
-  }
-}
-
-class LowerIdleRight extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerIdleRight", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleRight);
-  }
-
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleRight);
-  }
-}
-
-class LowerIdleDownLeft extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerIdleDownLeft", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleDownLeft);
-  }
-
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleDownLeft);
-  }
-}
-
-class LowerIdleDownRight extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerIdleDownRight", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleDownRight);
-  }
-
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleDownRight);
-  }
-}
-
-class LowerIdleUpLeft extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerIdleUpLeft", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleUpLeft);
-  }
-
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleUpLeft);
-  }
-}
-
-class LowerIdleUpRight extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerIdleUpRight", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleUpRight);
-  }
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimIdleUpRight);
-  }
-}
-
-class LowerWalkDown extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerWalkDown", machine);
-  }
-
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkDown);
-  }
-
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkDown);
-  }
-}
-
-class LowerWalkUp extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerWalkUp", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkUp);
-  }
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkUp);
-  }
-}
-
-class LowerWalkLeft extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerWalkLeft", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkLeft);
-  }
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkLeft);
-  }
-}
-
-class LowerWalkRight extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerWalkRight", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkRight);
-  }
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkRight);
-  }
-}
-
-class LowerWalkDownLeft extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerWalkDownLeft", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkDownLeft);
-  }
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkDownLeft);
-  }
-}
-
-class LowerWalkDownRight extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerWalkDownRight", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkDownRight);
-  }
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkDownRight);
-  }
-}
-
-class LowerWalkUpLeft extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerWalkUpLeft", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkUpLeft);
-  }
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkUpLeft);
-  }
-}
-
-class LowerWalkUpRight extends ExState {
-  constructor(public machine: ExFSM) {
-    super("lowerWalkUpRight", machine);
-  }
-  enter(_previous: ExState | null, ...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkUpRight);
-  }
-  update(...params: any): void | Promise<void> {
-    this.machine.owner.graphics.use(plyrLegsAnimWalkUpRight);
-  }
-}
-
-//#endregion lowerstates
 
 function checkForOpposite(leftstick: StickPosition, rightstick: StickPosition): boolean {
   if (leftstick != StickPosition.Idle) {

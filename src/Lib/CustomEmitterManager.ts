@@ -5,6 +5,29 @@ export interface CustomActorEventBus extends ActorEvents {
   myEvent: { myEventData: any };
   testEvent: { testEventData: any };
   updateActor: { UUID: string; position: Vector; rotation: number };
+  updateActorInput: { direction: string; UUID: string };
+  leftStickIdle: {};
+  leftStickLeft: {};
+  leftStickRight: {};
+  leftStickDown: {};
+  leftStickDownLeft: {};
+  leftStickDownRight: {};
+  leftStickUpLeft: {};
+  leftStickUpRight: {};
+  leftStickUp: {};
+  rightStickIdle: {};
+  rightStickLeft: {};
+  rightStickRight: {};
+  rightStickDown: {};
+  rightStickDownLeft: {};
+  rightStickDownRight: {};
+  rightStickUpLeft: {};
+  rightStickUpRight: {};
+  rightStickUp: {};
+  shoot: {};
+  stopshoot: {};
+  toggleArm: {};
+  outOfAmmo: {};
 }
 
 export interface CustomeEngineEventBus extends EngineEvents {

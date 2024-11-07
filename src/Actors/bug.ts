@@ -15,15 +15,9 @@ import {
 } from "excalibur";
 import { bugAnimation } from "../Animations/bugAnimations";
 import { NetworkControl } from "../Components/networkControl";
-import { P2P } from "../Lib/P2P";
+import { NW_MessageType, P2P } from "../Lib/P2P";
 import { UUID } from "../Lib/UUID";
 import { ActorSignals } from "../Lib/CustomEmitterManager";
-
-enum NW_MessageType {
-  StateUpdate = 0,
-  Creation = 1,
-  Deletion = 2,
-}
 
 export class Bug extends Actor {
   UUID = UUID.generateUUID();
